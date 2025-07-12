@@ -104,6 +104,19 @@ private final class WindowInteractionHandler: NSView, NSMenuDelegate {
         stopCaptureItem.isEnabled = !isSelectionVisible
     }
 
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        // Allow selection view controls to receive clicks, but keep the
+        // context menu available via right-click or Control-click.
+        guard isSelectionVisible else { return super.hitTest(point) }
+
+        let event = window?.currentEvent ?? NSApp.currentEvent
+        let isContextClick =
+            event?.type == .rightMouseDown ||
+            (event?.type == .leftMouseDown && event?.modifierFlags.contains(.control) == true)
+
+        return isContextClick ? self : nil
+    }
+
     override func mouseDown(with event: NSEvent) {
         if !editModeEnabled && !isSelectionVisible {
             onSourceWindowFocus?()
