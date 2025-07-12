@@ -54,6 +54,7 @@ For development updates, please join our Discord:
 -   `⌘N` Create new preview window
 -   `⌘E` Toggle edit mode
 -   `⌘,` Open settings
+-   `⌥⇥` Cycle preview windows
 
 ### Settings
 
