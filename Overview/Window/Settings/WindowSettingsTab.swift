@@ -18,6 +18,7 @@ struct WindowSettingsTab: View {
     @Default(.windowOpacity) private var windowOpacity
     @Default(.defaultWindowWidth) private var defaultWindowWidth
     @Default(.defaultWindowHeight) private var defaultWindowHeight
+    @Default(.launchAtLogin) private var launchAtLogin
 
     var body: some View {
         Form {
@@ -126,6 +127,10 @@ struct WindowSettingsTab: View {
                     Defaults.Toggle("Save window positions on quit", key: .saveWindowsOnQuit)
                     Defaults.Toggle(
                         "Restore window positions on launch", key: .restoreWindowsOnLaunch)
+                    Toggle("Launch Overview on login", isOn: $launchAtLogin)
+                        .onChange(of: launchAtLogin) { newValue in
+                            LoginItemService.shared.setLaunchAtLogin(enabled: newValue)
+                        }
                 }
             }
         }

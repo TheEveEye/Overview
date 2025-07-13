@@ -7,6 +7,7 @@
  The application delegate managing global state coordination and window management.
 */
 
+import Defaults
 import Sparkle
 import SwiftUI
 
@@ -61,6 +62,7 @@ final class OverviewAppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         logger.debug("Application finished launching")
         NSApp.setActivationPolicy(.accessory)
+        LoginItemService.shared.setLaunchAtLogin(enabled: Defaults[.launchAtLogin])
 
         NotificationCenter.default.addObserver(
             self,
