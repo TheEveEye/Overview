@@ -205,7 +205,8 @@ final class DiagnosticService {
                 createOnLaunch: Defaults[.createOnLaunch],
                 closeWithSource: Defaults[.closeOnCaptureStop],
                 saveWindowsOnQuit: Defaults[.saveWindowsOnQuit],
-                restoreWindowsOnLaunch: Defaults[.restoreWindowsOnLaunch]
+                restoreWindowsOnLaunch: Defaults[.restoreWindowsOnLaunch],
+                launchAtLogin: Defaults[.launchAtLogin]
             ),
             overlay: OverlaySettings(
                 focusBorder: FocusBorderSettings(
@@ -513,6 +514,7 @@ struct WindowSettings: Codable {
     let closeWithSource: Bool
     let saveWindowsOnQuit: Bool
     let restoreWindowsOnLaunch: Bool
+    let launchAtLogin: Bool
 }
 
 struct OverlaySettings: Codable {
