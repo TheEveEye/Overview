@@ -12,4 +12,5 @@ extension Defaults.Keys {
     static let storedLayouts = Key<Data?>("storedLayouts", default: nil)
     static let launchLayoutUUID = Key<UUID?>("launchLayoutUUID", default: nil)
     static let closeWindowsOnApply = Key<Bool>("closeWindowsOnApply", default: true)
+    static let includeWindowNames = Key<Bool>("includeWindowNames", default: false)
 }

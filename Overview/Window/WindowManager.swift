@@ -23,6 +23,7 @@ final class WindowManager: ObservableObject {
     // Private State
     private var activeWindows: Set<NSWindow> = []
     private var windowDelegates: [NSWindow: WindowDelegate] = [:]
+    private var captureCoordinators: [NSWindow: CaptureCoordinator] = [:]
     private var sessionWindowCounter: Int
 
     init(
@@ -39,7 +40,7 @@ final class WindowManager: ObservableObject {
         logger.debug("Window manager initialized")
     }
 
-    func createWindow(at frame: NSRect? = nil) throws {
+    func createWindow(at frame: NSRect? = nil, windowName: String? = nil) throws {
         do {
             let defaultSize = CGSize(
                 width: Defaults[.defaultWindowWidth], height: Defaults[.defaultWindowHeight])
@@ -48,7 +49,7 @@ final class WindowManager: ObservableObject {
                 windowCount: sessionWindowCounter,
                 providedFrame: frame)
 
-            configureWindow(window)
+            configureWindow(window, windowName: windowName)
 
             activeWindows.insert(window)
             sessionWindowCounter += 1
@@ -66,6 +67,7 @@ final class WindowManager: ObservableObject {
             window.orderOut(self)
             activeWindows.remove(window)
             windowDelegates.removeValue(forKey: window)
+            captureCoordinators.removeValue(forKey: window)
             logger.debug("Window closed successfully")
         }
     }
@@ -102,9 +104,15 @@ final class WindowManager: ObservableObject {
         }
     }
 
-    func saveLayout(name: String) -> Layout? {
-        let layout = layoutManager.createLayout(name: name)
+    func saveLayout(name: String, includeWindowNames: Bool = false) -> Layout? {
+        let windows = collectWindows(includeWindowNames: includeWindowNames)
+        let layout = layoutManager.createLayout(name: name, windows: windows)
         return layout
+    }
+
+    func updateLayout(id: UUID, includeWindowNames: Bool = false) {
+        let windows = collectWindows(includeWindowNames: includeWindowNames)
+        layoutManager.updateLayout(id: id, windows: windows)
     }
 
     func applyLayout(_ layout: Layout) {
@@ -112,10 +120,10 @@ final class WindowManager: ObservableObject {
             closeAllWindows()
         }
 
-        windowServices.windowStorage.applyWindows(layout.windows) { [weak self] frame in
+        windowServices.windowStorage.applyWindows(layout.windows) { [weak self] windowState in
             guard let self = self else { return }
             do {
-                try createWindow(at: frame)
+                try createWindow(at: windowState.frame, windowName: windowState.windowName)
             } catch {
                 logger.logError(
                     error, context: "Failed to create window from layout '\(layout.name)'")
@@ -134,11 +142,11 @@ final class WindowManager: ObservableObject {
         }
     }
 
-    private func configureWindow(_ window: NSWindow) {
+    private func configureWindow(_ window: NSWindow, windowName: String?) {
         windowServices.windowConfiguration.applyConfiguration(
             to: window, hasShadow: Defaults[.windowShadowEnabled])
         setupWindowDelegate(for: window)
-        setupWindowContent(window)
+        setupWindowContent(window, windowName: windowName)
     }
 
     private func setupWindowDelegate(for window: NSWindow) {
@@ -148,11 +156,13 @@ final class WindowManager: ObservableObject {
         logger.debug("Window delegate configured: id=\(sessionWindowCounter)")
     }
 
-    private func setupWindowContent(_ window: NSWindow) {
+    private func setupWindowContent(_ window: NSWindow, windowName: String?) {
         let captureCoordinator = CaptureCoordinator(
             sourceManager: sourceManager,
             permissionManager: permissionManager
         )
+
+        captureCoordinators[window] = captureCoordinator
 
         let contentView = PreviewView(
             previewManager: previewManager,
@@ -165,12 +175,39 @@ final class WindowManager: ObservableObject {
             }
         )
         window.contentView = NSHostingView(rootView: contentView)
+
+        if let title = windowName {
+            selectSource(named: title, for: captureCoordinator)
+        }
     }
 
     private func closeAllWindows() {
         let windowsToClose = activeWindows
         for window in windowsToClose {
             closeWindow(window)
+        }
+    }
+
+    private func collectWindows(includeWindowNames: Bool) -> [Window] {
+        activeWindows.compactMap { window in
+            let title: String? = includeWindowNames ? captureCoordinators[window]?.sourceWindowTitle : nil
+            return Window(frame: window.frame, windowName: title)
+        }
+    }
+
+    private func selectSource(named title: String, for coordinator: CaptureCoordinator) {
+        Task { @MainActor in
+            do {
+                let sources = try await sourceManager.getFilteredSources()
+                if let match = sources.first(where: { $0.title == title }) {
+                    previewManager.startSourcePreview(
+                        captureCoordinator: coordinator,
+                        source: match
+                    )
+                }
+            } catch {
+                logger.logError(error, context: "Failed to select source '\(title)'")
+            }
         }
     }
 
