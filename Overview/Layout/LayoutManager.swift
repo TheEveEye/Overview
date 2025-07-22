@@ -30,13 +30,13 @@ final class LayoutManager: ObservableObject {
 
     // MARK: - Public Methods
 
-    func createLayout(name: String) -> Layout? {
+    func createLayout(name: String, windows: [Window]? = nil) -> Layout? {
         guard isLayoutNameUnique(name) else {
             logger.warning("Attempted to create layout with non-unique name: \(name)")
             return nil
         }
 
-        let currentWindows = windowServices.windowStorage.collectWindows()
+        let currentWindows = windows ?? windowServices.windowStorage.collectWindows()
         let layout = Layout(name: name, windows: currentWindows)
 
         layouts.append(layout)
@@ -45,7 +45,7 @@ final class LayoutManager: ObservableObject {
         return layout
     }
 
-    func updateLayout(id: UUID, name: String? = nil) {
+    func updateLayout(id: UUID, name: String? = nil, windows: [Window]? = nil) {
         guard let index = layouts.firstIndex(where: { $0.id == id }) else {
             logger.warning("Attempted to update non-existent layout: \(id)")
             return
@@ -59,7 +59,12 @@ final class LayoutManager: ObservableObject {
                 return
             }
             layout.update(name: name)
-        } else {
+        }
+
+        if let windows = windows {
+            layout.update(windows: windows)
+            logger.info("Updated layout '\(layout.name)' with \(windows.count) windows")
+        } else if name == nil {
             let currentWindows = windowServices.windowStorage.collectWindows()
             layout.update(windows: currentWindows)
             logger.info("Updated layout '\(layout.name)' with \(currentWindows.count) windows")

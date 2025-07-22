@@ -48,9 +48,9 @@ final class WindowStorageService {
         }
     }
 
-    func applyWindows(_ windows: [Window], using handler: (NSRect) -> Void) {
+    func applyWindows(_ windows: [Window], using handler: (Window) -> Void) {
         windows.forEach { window in
-            handler(window.frame)
+            handler(window)
         }
         logger.info("Successfully applied \(windows.count) windows")
     }

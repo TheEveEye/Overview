@@ -37,6 +37,7 @@ struct LayoutSettingsTab: View {
 
     // Layout Settings
     @Default(.launchLayoutUUID) private var launchLayoutUUID
+    @Default(.includeWindowNames) private var includeWindowNames
 
     init(windowManager: WindowManager, layoutManager: LayoutManager) {
         self.layoutManager = layoutManager
@@ -151,6 +152,8 @@ struct LayoutSettingsTab: View {
 
                 Defaults.Toggle(
                     "Close all windows when applying layouts", key: .closeWindowsOnApply)
+                Defaults.Toggle(
+                    "Save window names with layout", key: .includeWindowNames)
             }
         }
         .formStyle(.grouped)
@@ -179,7 +182,7 @@ struct LayoutSettingsTab: View {
             Button("Cancel", role: .cancel) {}
             Button("Update") {
                 if let layout = layoutToModify {
-                    layoutManager.updateLayout(id: layout.id)
+                    windowManager.updateLayout(id: layout.id, includeWindowNames: includeWindowNames)
                 }
                 layoutToModify = nil
             }
@@ -271,7 +274,8 @@ struct LayoutSettingsTab: View {
         isJSONEditorVisible = true
     }
     private func createLayout() {
-        guard !newLayoutName.isEmpty, layoutManager.createLayout(name: newLayoutName) != nil
+        guard !newLayoutName.isEmpty,
+            windowManager.saveLayout(name: newLayoutName, includeWindowNames: includeWindowNames) != nil
         else {
             logger.warning("Attempted to create layout with empty or non-unique name")
             return
@@ -349,7 +353,7 @@ struct LayoutSettingsTab: View {
         }
 
         for layout in layoutsFromJSON {
-            _ = windowManager.saveLayout(name: layout.name)
+            _ = windowManager.saveLayout(name: layout.name, includeWindowNames: includeWindowNames)
 
             if let newLayout = layoutManager.layouts.last {
                 layoutManager.updateLayout(id: newLayout.id, name: layout.name)
