@@ -53,7 +53,8 @@ final class SettingsManager: ObservableObject {
             .closeOnCaptureStop,
             .assignPreviewsToAllDesktops,
             .saveWindowsOnQuit,
-            .restoreWindowsOnLaunch
+            .restoreWindowsOnLaunch,
+            .launchAtLogin
         )
 
         /// Reset Overlay settings
@@ -88,6 +89,8 @@ final class SettingsManager: ObservableObject {
             .filterMode,
             .appFilterNames
         )
+
+        LoginItemService.shared.setLaunchAtLogin(enabled: Defaults[.launchAtLogin])
 
         logger.info("Settings reset completed successfully")
     }
