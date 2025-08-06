@@ -209,6 +209,13 @@ struct OverviewApp: App {
                 }
                 .keyboardShortcut("e", modifiers: .command)
             }
+
+            CommandMenu("Window") {
+                Button("Cycle Windows") {
+                    appDelegate.windowManager.cyclePreviewWindows()
+                }
+                .keyboardShortcut(.tab, modifiers: .option)
+            }
         }
     }
 

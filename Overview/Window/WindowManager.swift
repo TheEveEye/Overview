@@ -182,6 +182,29 @@ final class WindowManager: ObservableObject {
             logger.info("Successfully restored \(restoredCount) windows")
         }
     }
+
+    func cyclePreviewWindows() {
+        let windows = NSApp.orderedWindows.filter { activeWindows.contains($0) }
+
+        guard !windows.isEmpty else {
+            logger.debug("No active preview windows for cycling")
+            return
+        }
+
+        NSApp.activate(ignoringOtherApps: true)
+
+        guard let keyWindow = NSApp.keyWindow,
+            let currentIndex = windows.firstIndex(of: keyWindow)
+        else {
+            windows.first?.makeKeyAndOrderFront(self)
+            logger.info("Preview window cycle started")
+            return
+        }
+
+        let nextIndex = (currentIndex + 1) % windows.count
+        windows[nextIndex].makeKeyAndOrderFront(self)
+        logger.info("Cycled to preview window \(nextIndex + 1)")
+    }
 }
 
 // MARK: - Window Delegate
